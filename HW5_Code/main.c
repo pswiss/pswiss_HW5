@@ -1,5 +1,6 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
+#include "I2C2_Commands.h"   // I2C2 Functions
 
 // DEVCFG0
 #pragma config DEBUG = OFF // no debugging
