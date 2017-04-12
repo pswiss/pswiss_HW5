@@ -42,27 +42,90 @@
 #define pinExAddress  0b0100000
 #define extendedButtonPin  7
 #define extendedLEDPin 0
+#define inputMask 0b10000000
 
 void initExpander()
 {
     // Initializes the Pin Expander
     i2c_master_setup();
     i2c_master_start();
-    unsigned char sendbyte = (pinExAddress << 1)|(0b00000001);
+    unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
     i2c_master_send(sendbyte); // Send address
     i2c_master_send(0x00); // Configuring IO direction
-    i2c_master_send(0b10000000);// Send configure gp0 as output, gp7 as input    
+    i2c_master_send(inputMask);// Send configure gp0 as output, gp7 as input    
     i2c_master_stop();
+    i2c_master_restart();
 }
 
 void setExpander(char pin, char level)
 {
     // Send a message to the pin expander
+    i2c_master_start();
+    unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
+    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(0x09); // GPIO
+    i2c_master_restart();
+    
+    sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
+    i2c_master_send(sendbyte); // Send address
+    unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
+    i2c_master_restart();
+    
+    sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
+    i2c_master_send(sendbyte); // Send address
+    
+    unsigned char outMask = 0b00000001;
+    int i;
+    for(i=0; i< pin; i++) // shift the outMask according to pin number
+    {
+        outMask << 1; // puts a 1 at desired pin
+    }
+    
+    if(level==0)
+    {
+        outMask = outMask ^ 0b11111111;// Flips the bits
+        i2c_master_send(pinState&outMask); // desired pin will = 0
+    }
+    else
+    {
+        i2c_master_send(pinState|outMask); // desired pin will = 1
+    }
+    
+    i2c_master_stop();
+    i2c_master_restart();
 }
 
 char getExpander(char pin)
 {
     // Get the level of the pin
+    // Read current state of the expander
+    i2c_master_start();
+    unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
+    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(0x09); // GPIO
+    i2c_master_restart();
+    sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
+    i2c_master_send(sendbyte); // Send address
+    unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
+
+    i2c_master_stop();
+    i2c_master_restart();
+    
+    unsigned char inMask = 0b00000001;
+    int i;
+    for(i=0; i< pin; i++) // shift the inMask according to pin number
+    {
+        inMask << 1; // puts a 1 at desired pin
+    }
+    
+    if(inMask&pinState == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
 }
 
 int main() {
