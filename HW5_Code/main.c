@@ -1,6 +1,6 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
-#include "I2C2_Commands.h"   // I2C2 Functions
+#include"I2C2_Commands.h"   // I2C2 Functions
 
 // DEVCFG0
 #pragma config DEBUG = OFF // no debugging
@@ -37,6 +37,33 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
+////////////////////////////////////////////////////////////////////////////////
+
+#define pinExAddress  0b0100000
+#define extendedButtonPin  7
+#define extendedLEDPin 0
+
+void initExpander()
+{
+    // Initializes the Pin Expander
+    i2c_master_setup();
+    i2c_master_start();
+    unsigned char sendbyte = (pinExAddress << 1)|(0b00000001);
+    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(0x00); // Configuring IO direction
+    i2c_master_send(0b10000000);// Send configure gp0 as output, gp7 as input    
+    i2c_master_stop();
+}
+
+void setExpander(char pin, char level)
+{
+    // Send a message to the pin expander
+}
+
+char getExpander(char pin)
+{
+    // Get the level of the pin
+}
 
 int main() {
 
@@ -57,13 +84,14 @@ int main() {
     // do your TRIS and LAT commands here
     ANSELBbits.ANSB2 = 0;
     __builtin_enable_interrupts();
-    
-    
+        
     // Configure I2C
-    
+    unsigned char buttonStatus = 0;
+    initExpander();
     
     while(1) {
 	    // Read GP7
+        buttonStatus = getExpander(extendedButtonPin);
         // If GP7
         //  GP0 High
         // Else
