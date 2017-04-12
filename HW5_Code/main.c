@@ -155,9 +155,14 @@ int main() {
     while(1) {
 	    // Read GP7
         buttonStatus = getExpander(extendedButtonPin);
-        // If GP7
-        //  GP0 High
-        // Else
-        //  GP0 Low
+        if(buttonStatus == 0)
+        {
+            setExpander(extendedLEDPin, 0);
+        }
+        else
+        {
+            setExpander(extendedLEDPin, 1);
+        }
+        
     }
 }
