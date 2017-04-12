@@ -69,6 +69,7 @@ void setExpander(char pin, char level)
     sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
     i2c_master_send(sendbyte); // Send address
     unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
+    i2c_master_ack(1);
     i2c_master_restart();
     
     sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
@@ -107,6 +108,7 @@ char getExpander(char pin)
     sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
     i2c_master_send(sendbyte); // Send address
     unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
+    i2c_master_ack(1);
 
     i2c_master_stop();
     i2c_master_restart();
