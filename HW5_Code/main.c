@@ -3,7 +3,7 @@
 #include"I2C2_Commands.h"   // I2C2 Functions
 
 // DEVCFG0
-#pragma config DEBUG = OFF // no debugging
+#pragma config DEBUG = ON // no debugging
 #pragma config JTAGEN = OFF // no jtag
 #pragma config ICESEL = ICS_PGx1 // use PGED1 and PGEC1
 #pragma config PWP = OFF // no write protect
@@ -46,21 +46,19 @@
 
 void initExpander()
 {
-    // Initializes the Pin Expander
-    i2c_master_setup();
-    
+    // Initializes the Pin Expander   
     i2c_master_start();
     unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing    
-    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(sendbyte); // Send opcode
     i2c_master_send(0x05); // IOCON
-    i2c_master_send(0b00110110);
+    i2c_master_send(0b00100101);
     i2c_master_restart();
+    i2c_master_stop();
     
-    
-    
-    
+    i2c_master_start();
+    i2c_master_send(sendbyte); // Send opcode, write
     i2c_master_send(0x00); // Configuring IO direction
-    i2c_master_send(inputMask);// Send configure gp0 as output, gp7 as input    
+    i2c_master_send(inputMask);// Send configure gp0 as output, gp7 as input 
     i2c_master_stop();
     
 }
@@ -68,22 +66,20 @@ void initExpander()
 void setExpander(char pin, char level)
 {
     // Send a message to the pin expander
+    
+    // Read current state of the expander
     i2c_master_start();
     unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
-    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(sendbyte); // Send opcode, write
     i2c_master_send(0x09); // GPIO
-    i2c_master_send(0b11111111); // all on
-    /*i2c_master_restart();
-    
+    i2c_master_restart();
     sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
-    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(sendbyte); // Send opcode, read
     unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
     i2c_master_ack(1);
-    i2c_master_restart();
+    i2c_master_stop();
     
-    sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
-    i2c_master_send(sendbyte); // Send address
-    
+    // Logic to select pin
     unsigned char outMask = 0b00000001;
     int i;
     for(i=0; i< pin; i++) // shift the outMask according to pin number
@@ -91,21 +87,23 @@ void setExpander(char pin, char level)
         outMask << 1; // puts a 1 at desired pin
     }
     
+    // Get Pic to point where it can write the pin
+    i2c_master_start();
+    sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
+    i2c_master_send(sendbyte); // Send opcode, write
+    i2c_master_send(0x09); // GPIO
+    
+    // Logic to set pin
     if(level==0)
     {
-        outMask = outMask ^ 0b11111111;// Flips the bits
+        outMask = !outMask;// Flips the bits
         i2c_master_send(pinState&outMask); // desired pin will = 0
     }
     else
     {
         i2c_master_send(pinState|outMask); // desired pin will = 1
     }
-     */
-    
-    
-    
     i2c_master_stop();
-    
 }
 
 char getExpander(char pin)
@@ -115,17 +113,15 @@ char getExpander(char pin)
     // Read current state of the expander
     i2c_master_start();
     unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
-    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(sendbyte); // Send opcode, write
     i2c_master_send(0x09); // GPIO
     i2c_master_restart();
     sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
-    i2c_master_send(sendbyte); // Send address
+    i2c_master_send(sendbyte); // Send opcode, read
     unsigned char pinState = i2c_master_recv(); // Receive current state of GPIO
     i2c_master_ack(1);
-
     i2c_master_stop();
-    i2c_master_restart();
-    
+
     unsigned char inMask = 0b00000001;
     int i;
     for(i=0; i< pin; i++) // shift the inMask according to pin number
@@ -160,20 +156,21 @@ int main() {
     DDPCONbits.JTAGEN = 0;
 
     // do your TRIS and LAT commands here
-    ANSELBbits.ANSB2 = 0;
+    ANSELA = 0;
+    //ANSELAbits.ANSA5 = 0;
     __builtin_enable_interrupts();
         
     // Configure I2C
     unsigned char buttonStatus = 0;
+    
+    i2c_master_setup();
+    
     initExpander();
-    
-    
+      
     
     while(1) 
     {
-        setExpander(0, 1);
-	    /*
-         * // Read GP7
+        // Read GP7
         buttonStatus = getExpander(extendedButtonPin);
         if(buttonStatus == 0)
         {
@@ -183,7 +180,5 @@ int main() {
         {
             setExpander(extendedLEDPin, 1);
         }
-         **/
-        
     }
 }
