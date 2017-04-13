@@ -1,6 +1,7 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
 #include"I2C2_Commands.h"   // I2C2 Functions
+//#include"i2c_com.h"
 
 // DEVCFG0
 #pragma config DEBUG = ON // no debugging
@@ -81,11 +82,7 @@ void setExpander(char pin, char level)
     
     // Logic to select pin
     unsigned char outMask = 0b00000001;
-    int i;
-    for(i=0; i< pin; i++) // shift the outMask according to pin number
-    {
-        outMask << 1; // puts a 1 at desired pin
-    }
+    outMask << pin; // puts a 1 at desired pin
     
     // Get Pic to point where it can write the pin
     i2c_master_start();
@@ -123,11 +120,7 @@ char getExpander(char pin)
     i2c_master_stop();
 
     unsigned char inMask = 0b00000001;
-    int i;
-    for(i=0; i< pin; i++) // shift the inMask according to pin number
-    {
-        inMask << 1; // puts a 1 at desired pin
-    }
+    inMask << pin; // puts a 1 at desired pin
     
     if(inMask&pinState == 0)
     {
@@ -157,6 +150,7 @@ int main() {
 
     // do your TRIS and LAT commands here
     ANSELA = 0;
+    ANSELB = 0;
     //ANSELAbits.ANSA5 = 0;
     __builtin_enable_interrupts();
         
@@ -172,7 +166,7 @@ int main() {
     {
         // Read GP7
         buttonStatus = getExpander(extendedButtonPin);
-        if(buttonStatus == 0)
+        if(buttonStatus == 1)
         {
             setExpander(extendedLEDPin, 0);
         }
