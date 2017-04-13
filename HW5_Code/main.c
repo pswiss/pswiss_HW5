@@ -43,7 +43,7 @@
 #define pinExAddress  0b0100000
 #define extendedButtonPin  7
 #define extendedLEDPin 0
-#define inputMask 0b10000000
+#define inputMask 0b11110000
 
 void initExpander()
 {
@@ -166,13 +166,14 @@ int main() {
     {
         // Read GP7
         buttonStatus = getExpander(extendedButtonPin);
-        if(buttonStatus == 1)
+        if(buttonStatus == 0)
         {
-            setExpander(extendedLEDPin, 0);
+            setExpander(extendedLEDPin, 1);
         }
         else
         {
-            setExpander(extendedLEDPin, 1);
+
+            setExpander(extendedLEDPin, 0);
         }
     }
 }
