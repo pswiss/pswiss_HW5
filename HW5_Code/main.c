@@ -48,13 +48,21 @@ void initExpander()
 {
     // Initializes the Pin Expander
     i2c_master_setup();
+    
     i2c_master_start();
-    unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
+    unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing    
     i2c_master_send(sendbyte); // Send address
+    i2c_master_send(0x05); // IOCON
+    i2c_master_send(0b00110110);
+    i2c_master_restart();
+    
+    
+    
+    
     i2c_master_send(0x00); // Configuring IO direction
     i2c_master_send(inputMask);// Send configure gp0 as output, gp7 as input    
     i2c_master_stop();
-    i2c_master_restart();
+    
 }
 
 void setExpander(char pin, char level)
@@ -64,7 +72,8 @@ void setExpander(char pin, char level)
     unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
     i2c_master_send(sendbyte); // Send address
     i2c_master_send(0x09); // GPIO
-    i2c_master_restart();
+    i2c_master_send(0b11111111); // all on
+    /*i2c_master_restart();
     
     sendbyte = (pinExAddress << 1)|(0b00000001);// Reading
     i2c_master_send(sendbyte); // Send address
@@ -91,14 +100,18 @@ void setExpander(char pin, char level)
     {
         i2c_master_send(pinState|outMask); // desired pin will = 1
     }
+     */
+    
+    
     
     i2c_master_stop();
-    i2c_master_restart();
+    
 }
 
 char getExpander(char pin)
 {
     // Get the level of the pin
+    
     // Read current state of the expander
     i2c_master_start();
     unsigned char sendbyte = (pinExAddress << 1)|(0b00000000);// Writing
@@ -154,8 +167,13 @@ int main() {
     unsigned char buttonStatus = 0;
     initExpander();
     
-    while(1) {
-	    // Read GP7
+    
+    
+    while(1) 
+    {
+        setExpander(0, 1);
+	    /*
+         * // Read GP7
         buttonStatus = getExpander(extendedButtonPin);
         if(buttonStatus == 0)
         {
@@ -165,6 +183,7 @@ int main() {
         {
             setExpander(extendedLEDPin, 1);
         }
+         **/
         
     }
 }
